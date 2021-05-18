@@ -1,0 +1,18 @@
+# app
+#===========
+
+# dependencies
+venv/
+
+# testing
+.coverage
+
+# misc
+__pycache__/
+.pytest_cache/
+*.pyc
+app.db
+
+logs/
+migrations/
+.vscode/
