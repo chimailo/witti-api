@@ -96,8 +96,13 @@ def create_app(config=Config):
             mail_handler.setLevel(logging.ERROR)
             app.logger.addHandler(mail_handler)
 
-        if not os.path.exists('logs'):
-            os.mkdir('logs')
+        if app.config['LOG_TO_STDOUT']:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setLevel(logging.INFO)
+            app.logger.addHandler(stream_handler)
+        else:
+            if not os.path.exists('logs'):
+                os.mkdir('logs')
             file_handler = RotatingFileHandler(
                 'logs/witti.log', maxBytes=10240, backupCount=10)
             file_handler.setFormatter(logging.Formatter(
@@ -105,7 +110,7 @@ def create_app(config=Config):
             file_handler.setLevel(logging.INFO)
             app.logger.addHandler(file_handler)
 
-            app.logger.setLevel(logging.INFO)
-            app.logger.info('Witti startup')
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('Witti startup')
 
     return app

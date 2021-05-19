@@ -1,0 +1,1 @@
+web: python manage.py db upgrade; python manage.py seed-db; gunicorn :app
