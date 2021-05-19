@@ -106,9 +106,9 @@ def test(path):
     return subprocess.call(cmd, shell=True)
 
 
-@click.argument("num_of_users", default=150)
-@click.argument("num_of_posts", default=600)
-@click.argument("num_of_comments", default=1800)
+@click.argument("num_of_users", default=38)
+@click.argument("num_of_posts", default=140)
+@click.argument("num_of_comments", default=450)
 @cli.command()
 def seed_db(num_of_users, num_of_posts, num_of_comments):
     seed_users(num_of_users)
@@ -171,7 +171,7 @@ def seed_users(num_of_users):
 
         for user in users:
             following = random.sample(
-                users, k=random.randrange(20, int(len(users)/4)))
+                users, k=random.randrange(15, int(len(users)/2)))
             user.followed.extend(following)
 
         print('Saving to database...')
