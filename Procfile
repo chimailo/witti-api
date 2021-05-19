@@ -1,1 +1,1 @@
-web: python manage.py db upgrade; python manage.py seed-db; gunicorn :app
+web: python manage.py db init; python manage.py migrate; python manage.py db upgrade; python manage.py seed-db; gunicorn manage:app
