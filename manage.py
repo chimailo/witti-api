@@ -24,8 +24,8 @@ def random_timestamp(start, end):
     return random.random() * (end - start) + start
 
 
-@cli.command()
 @click.argument("path", default="src")
+@cli.command()
 def cov(path):
     """
     Run a test coverage report.
@@ -107,10 +107,11 @@ def test(path):
 
 
 @click.argument("num_of_users", default=38)
-@click.argument("num_of_posts", default=140)
-@click.argument("num_of_comments", default=450)
+@click.argument("num_of_posts", default=150)
+@click.argument("num_of_comments", default=500)
 @cli.command()
 def seed_db(num_of_users, num_of_posts, num_of_comments):
+    db_init()
     seed_users(num_of_users)
     seed_posts(num_of_posts)
     follow_tags()
@@ -119,7 +120,7 @@ def seed_db(num_of_users, num_of_posts, num_of_comments):
     seed_messages()
 
 
-# @cli.command()
+@cli.command()
 def db_init():
     """Initialize the database."""
     db.drop_all()
@@ -129,8 +130,8 @@ def db_init():
     return None
 
 
-# @click.argument("num_of_users", default=150)
-# @cli.command()
+@click.argument("num_of_users", default=40)
+@cli.command()
 def seed_users(num_of_users):
     """
     Seed the database with users.
@@ -148,7 +149,7 @@ def seed_users(num_of_users):
         users = []
 
         for user in data.get('results'):
-            u = User(email=user.get('email'), password='password')
+            u = User(email=user.get('email'))
             u.created_on = random_timestamp(
                 datetime(2020, 3, 1), datetime(2020, 7, 28))
 
@@ -184,7 +185,8 @@ def seed_users(num_of_users):
         print(f'Error: {error}')
 
 
-# @cli.command()
+@click.argument("num_of_posts", default=150)
+@cli.command()
 def seed_posts(num_of_posts):
     """Seed the database with some posts."""
     users = User.query.all()
@@ -273,13 +275,14 @@ def seed_posts(num_of_posts):
         print(f'Error: {error}')
 
 
-# @cli.command()
+@cli.command()
 def follow_tags():
     print('following tags...')
     tags = Tag.query.all()
 
     for user in User.query.all():
         user_tags = random.sample(tags, k=random.randrange(1, 5))
+        print(user, user_tags)
         user.tags.extend(user_tags)
         db.session.add(user)
     db.session.commit()

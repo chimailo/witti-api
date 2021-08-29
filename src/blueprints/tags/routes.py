@@ -99,7 +99,7 @@ def get_top_tags(user):
         nextCursor = urlsafe_base64(str(tags[items_per_page - 1][1]))
 
     return {
-        'data': [tag[0].to_dict(user) for tag in tags[:items_per_page]],
+        'data': [tag[0].to_dict(user) for tag in tags],
         'nextCursor': nextCursor
     }
 

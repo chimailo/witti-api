@@ -10,8 +10,8 @@ class Chat(db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
-    user1_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    user2_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user1_id = db.Column(db.String(32), db.ForeignKey("users.id"), nullable=False)
+    user2_id = db.Column(db.String(32), db.ForeignKey("users.id"), nullable=False)
     messages = db.relationship(
         'Message', backref='chat', cascade='all, delete-orphan')
 
@@ -21,7 +21,7 @@ class Chat(db.Model):
 
 class LastReadMessage(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey(
+    user_id = db.Column(db.String(32), db.ForeignKey(
         "users.id"), primary_key=True, nullable=False)
     chat_id = db.Column(db.Integer, db.ForeignKey(
         "chats.id"), primary_key=True, nullable=False)
@@ -47,7 +47,7 @@ class Message(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text())
-    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    author_id = db.Column(db.String(32), db.ForeignKey("users.id"))
     created_on = db.Column(db.DateTime, default=datetime.utcnow)
     chat_id = db.Column(
         db.Integer, db.ForeignKey("chats.id"), nullable=False)
@@ -93,8 +93,8 @@ class Notification(db.Model):
     subject = db.Column(db.String(128), index=True)
     item_id = db.Column(db.Integer(), index=True)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    doer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    user_id = db.Column(db.Integer, nullable=False)
+    doer_id = db.Column(db.String(32), db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.String(32), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey("posts.id"))
     post = db.relationship('Post', backref='notif', lazy='joined')
 

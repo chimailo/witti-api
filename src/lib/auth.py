@@ -17,10 +17,15 @@ def authenticate(func):
         token = auth_header.split(" ")[1]
         payload = User.decode_auth_token(token)
 
+        if payload['iss'] != 'https://securetoken.google.com/witting' or \
+            payload['aud'] != 'witting' or \
+            payload['sub'] != payload['user_id']:
+            return error_response(401, message='Invalid token.')
+
         if not isinstance(payload, dict):
             return error_response(401, message=payload)
 
-        user = User.find_by_id(payload.get('id'))
+        user = User.find_by_id(payload.get('sub'))
 
         if user is None:
             return error_response(401, message='Invalid token.')

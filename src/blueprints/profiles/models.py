@@ -17,7 +17,7 @@ class Profile(db.Model, ResourceMixin):
     dob = db.Column(db.DateTime)
     bio = db.Column(db.Text)
     user_id = db.Column(
-        db.Integer,
+        db.String(32),
         db.ForeignKey('users.id', ondelete='CASCADE', onupdate='CASCADE'),
         nullable=False
     )

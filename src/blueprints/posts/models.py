@@ -7,7 +7,7 @@ post_likes = db.Table(
     'post_likes',
     db.Column(
         'user_id',
-        db.Integer,
+        db.String(32),
         db.ForeignKey('users.id', ondelete='CASCADE', onupdate='CASCADE'),
         primary_key=True
     ),
@@ -43,7 +43,7 @@ class Post(db.Model, ResourceMixin):
     # Identification
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text)
-    user_id = db.Column(db.Integer, db.ForeignKey(
+    user_id = db.Column(db.String(32), db.ForeignKey(
         'users.id', ondelete='CASCADE', onupdate='CASCADE'))
     comment_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
     # relationships
@@ -105,5 +105,5 @@ class Post(db.Model, ResourceMixin):
             'tags': [{
                 'id': tag.id,
                 'name': tag.name,
-            } for tag in self.tags],
+            } for tag in self.tags]
         }

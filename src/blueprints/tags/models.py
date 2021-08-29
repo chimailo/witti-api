@@ -28,8 +28,7 @@ class Tag(db.Model, ResourceMixin, SearchableMixin):
         count = 0
 
         if len(self.users) == 1 or len(self.users) == 2:
-            followers = UserSchema(
-                many=True, only=('id', 'profile',)).dump(user)
+            followers = UserSchema(many=True, only=('id', 'profile',)).dump(self.users)
 
         if len(self.users) > 2:
             followers = UserSchema(many=True, only=('id', 'profile',)).dump(

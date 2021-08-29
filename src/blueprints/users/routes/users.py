@@ -16,7 +16,7 @@ from src.blueprints.tags.schema import TagSchema
 from src.blueprints.users.routes import users
 
 
-@users.route('/<int:id>/follow', methods=['POST'])
+@users.route('/<id>/follow', methods=['POST'])
 @authenticate
 def follow(user, id):
     to_follow = User.find_by_id(id)
@@ -41,7 +41,7 @@ def follow(user, id):
         return jsonify(following)
 
 
-@users.route('/<int:id>/unfollow', methods=['POST'])
+@users.route('/<id>/unfollow', methods=['POST'])
 @authenticate
 def unfollow(user, id):
     followed = User.find_by_id(id)

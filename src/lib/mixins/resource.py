@@ -24,7 +24,7 @@ class ResourceMixin(object):
         :type id: int
         :return: Class instance
         """
-        return cls.query.get(int(id))
+        return cls.query.get(id)
 
     def save(self):
         """

@@ -1,11 +1,13 @@
+import base64
+import json
 import random
-import jwt
-from datetime import datetime, timedelta
+import requests
+from authlib.jose import jwt, errors
+from datetime import datetime
 from flask import current_app
 from sqlalchemy import and_
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from src import db
 from src.lib.mixins import ResourceMixin, SearchableMixin
@@ -18,13 +20,13 @@ followers = db.Table(
     'followers',
     db.Column(
         'follower_id',
-        db.Integer,
+        db.String(32),
         db.ForeignKey('users.id', ondelete='CASCADE', onupdate='CASCADE'),
         primary_key=True
     ),
     db.Column(
         'followed_id',
-        db.Integer,
+        db.String(32),
         db.ForeignKey('users.id', ondelete='CASCADE', onupdate='CASCADE'),
         primary_key=True)
 )
@@ -34,7 +36,7 @@ user_tags = db.Table(
     'user_tags',
     db.Column(
         'user_id',
-        db.Integer,
+        db.String(32),
         db.ForeignKey('users.id', ondelete='CASCADE', onupdate='CASCADE'),
         primary_key=True
     ),
@@ -50,7 +52,7 @@ deleted_msgs = db.Table(
     'deleted_messages',
     db.Column(
         'user_id',
-        db.Integer,
+        db.String(32),
         db.ForeignKey('users.id', ondelete='CASCADE', onupdate='CASCADE'),
         primary_key=True
     ),
@@ -66,9 +68,8 @@ deleted_msgs = db.Table(
 class User(db.Model, ResourceMixin, SearchableMixin):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(32), primary_key=True, unique=True)
     email = db.Column(db.String(128), index=True, unique=True, nullable=False)
-    password = db.Column(db.String(128), nullable=False)
     is_active = db.Column(db.Boolean(), default=True, nullable=False)
     is_admin = db.Column(db.Boolean(), default=False, nullable=False)
 
@@ -104,58 +105,18 @@ class User(db.Model, ResourceMixin, SearchableMixin):
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
-        self.password = User.hash_password(kwargs.get('password', ''))
+        self.id = kwargs.get('id', bytes.decode(
+            base64.urlsafe_b64encode(
+                bytes(datetime.now().isoformat(), 'utf-8')
+            ), 'utf-8').rstrip('=')[7:])
+        # self.password = User.hash_password(kwargs.get('password', ''))
 
     def __str__(self):
         return f'<User {self.id} {self.email}>'
 
     @classmethod
     def find_by_email(cls, email):
-        return cls.query.filter((cls.email == email)).first()
-
-    @classmethod
-    def hash_password(cls, password):
-        """
-        Hash a plaintext string using PBKDF2.
-
-        :param password: Password in plain text
-        :type password: str
-        :return: str
-        """
-        if password:
-            return generate_password_hash(password)
-
-        return None
-
-    def check_password(self, password):
-        """
-        Check if the provided password matches that of the specified user.
-
-        :param password: Password in plain text
-        :return: boolean
-        """
-        return check_password_hash(self.password, password)
-
-    def encode_auth_token(self):
-        """Generates the auth token"""
-        try:
-            payload = {
-                'exp': datetime.utcnow() + timedelta(
-                    days=current_app.config.get('TOKEN_EXPIRATION_DAYS'),
-                    seconds=current_app.config.get('TOKEN_EXPIRATION_SECONDS')
-                ),
-                'iat': datetime.utcnow(),
-                'sub': {
-                    'id': self.id,
-                }
-            }
-            return jwt.encode(
-                payload,
-                current_app.config.get('SECRET_KEY'),
-                algorithm='HS256'
-            )
-        except Exception as e:
-            return e
+        return cls.query.filter(cls.email == email).first()
 
     @staticmethod
     def decode_auth_token(token):
@@ -166,16 +127,23 @@ class User(db.Model, ResourceMixin, SearchableMixin):
         :return dict: The user's identity
         """
         try:
-            payload = jwt.decode(
-                token,
-                current_app.config.get('SECRET_KEY'),
-                algorithms='HS256'
-            )
-            return payload.get('sub')
-        except jwt.ExpiredSignatureError:
+            res = requests.get(
+                'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com'
+            ).json();
+        except requests.exceptions.ConnectionError:
+            return 'Network error'
+
+        header64 = token.split('.')[0].encode('ascii')
+        header = json.loads(bytes.decode(base64.b64decode(header64 + b'=='), 'ascii'))
+
+        try:
+            payload = jwt.decode(token, res[header['kid']])
+        except errors.ExpiredTokenError:
             return 'Signature expired. Please log in again.'
-        except jwt.InvalidTokenError:
+        except Exception:
             return 'Invalid token. Please log in again.'
+        else:
+            return payload
 
     def follow(self, user):
         if not self.is_following(user):
@@ -198,8 +166,7 @@ class User(db.Model, ResourceMixin, SearchableMixin):
         if liked_posts.count() > 0:
             return liked_posts.all()
 
-        return [User.find_by_id(random.randrange(
-            User.query.count())) for _ in range(count)]
+        return random.sample(User.query.all(), k=count)
 
     def get_followed_posts(self):
         followed_users_posts = db.session.query(Post.id).join(
@@ -277,3 +244,47 @@ class User(db.Model, ResourceMixin, SearchableMixin):
     def delete_message_for_me(self, message):
         self.deleted_messages.append(message)
         self.save()
+
+    # @classmethod
+    # def hash_password(cls, password):
+    #     """
+    #     Hash a plaintext string using PBKDF2.
+
+    #     :param password: Password in plain text
+    #     :type password: str
+    #     :return: str
+    #     """
+    #     if password:
+    #         return generate_password_hash(password)
+
+    #     return None
+
+    # def check_password(self, password):
+    #     """
+    #     Check if the provided password matches that of the specified user.
+
+    #     :param password: Password in plain text
+    #     :return: boolean
+    #     """
+    #     return check_password_hash(self.password, password)
+
+    # def encode_auth_token(self):
+    #     """Generates the auth token"""
+    #     try:
+    #         payload = {
+    #             'exp': datetime.utcnow() + timedelta(
+    #                 days=current_app.config.get('TOKEN_EXPIRATION_DAYS'),
+    #                 seconds=current_app.config.get('TOKEN_EXPIRATION_SECONDS')
+    #             ),
+    #             'iat': datetime.utcnow(),
+    #             'sub': {
+    #                 'id': self.id,
+    #             }
+    #         }
+    #         return jwt.encode(
+    #             payload,
+    #             current_app.config.get('SECRET_KEY'),
+    #             algorithm='HS256'
+    #         )
+    #     except Exception as e:
+    #         return e

@@ -40,7 +40,7 @@ def register_user():
     name = data.get('name')
     username = data.get('username')
     email = data.get('email')
-    password = data.get('password')
+    id = data.get('id')
 
     # check for existing user
     user = User.query.filter(User.email == email).first()
@@ -53,7 +53,7 @@ def register_user():
     profile.username = username
     profile.avatar = profile.set_avatar(email)
 
-    user = User(password=password)
+    user = User(id=id)
     user.email = email
     user.profile = profile
 
@@ -63,7 +63,7 @@ def register_user():
         db.session.rollback()
         return server_error('Something went wrong, please try again.')
 
-    response = jsonify({'token': user.encode_auth_token()})
+    response = jsonify({'user': True})
     response.status_code = 201
     response.headers['Location'] = url_for('users.get_user', id=user.id)
     return response

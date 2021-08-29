@@ -29,8 +29,7 @@ def get_featured_posts():
     except Exception:
         return server_error('Something went wrong, please try again.')
 
-    return jsonify(PostSchema(
-        many=True, only=('id', 'body', 'author.profile')).dump(posts))
+    return jsonify([post.to_dict(post.author) for post in posts])
 
 
 @posts.route('/<int:post_id>', methods=['GET'])
@@ -119,18 +118,28 @@ def posts_feed(user):
         posts_reactions = Post.get_reactions().subquery()
         top_followed_posts = db.session.query(
             followed_posts, func.row_number().over(
-                order_by=posts_reactions.c.reactions).label(
-                    'sequence')).outerjoin(posts_reactions,
-                        followed_posts.c.posts_id ==
-                            posts_reactions.c.id).subquery()
+                order_by=posts_reactions.c.reactions).label('sequence')
+        ).outerjoin(
+            posts_reactions, followed_posts.c.posts_id == posts_reactions.c.id
+        ).filter(posts_reactions.c.reactions.isnot(None)).subquery()
 
         top_posts = db.session.query(Post, top_followed_posts.c.sequence).join(
             Post, top_followed_posts.c.posts_id == Post.id).order_by(
-                top_followed_posts.c.sequence.desc())
+                top_followed_posts.c.sequence.desc()) \
+                    if user.get_followed_posts().count() > 0 \
+                        else db.session.query(Post, func.row_number().over(
+                            order_by=posts_reactions.c.reactions.desc()).label(
+                                'sequence')).join(Post, Post.id == \
+                                    posts_reactions.c.id).filter(
+                                        posts_reactions.c.reactions.isnot(None))
 
         latest_posts = db.session.query(Post, followed_posts.c.posts_id).join(
             Post, Post.id == followed_posts.c.posts_id).order_by(
-                Post.created_on.desc())
+                Post.created_on.desc()) \
+                    if user.get_followed_posts().count() > 0 \
+                        else db.session.query(Post, Post.id).filter(
+                            Post.comment_id.is_(None)).order_by(
+                                Post.created_on.desc())
     except Exception as e:
         db.session.rollback()
         print(e)
