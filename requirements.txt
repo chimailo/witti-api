@@ -1,6 +1,7 @@
 authlib==0.15.4
 elasticsearch==7.12.0
 elasticsearch-dsl==7.3.0
+firebase-admin
 flake8==3.9.0
 Flask-CORS==3.0.10
 Flask==1.1.2

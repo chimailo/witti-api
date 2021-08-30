@@ -1,0 +1,20 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t chimailo/witti-api-test -f ./Dockerfile.dev .
+
+script:
+  - docker run chimailo/witti-api-test python manage.py flake8
+  # - docker run chimailo/witti-api-test python manage.py test
+
+after_success:
+  - docker build -t chimailo/witti-api .
+
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Push images to docker hub
+  - docker push chimailo/witti-api
