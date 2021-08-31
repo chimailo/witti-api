@@ -18,3 +18,6 @@ after_success:
 
   # Push images to docker hub
   - docker push chimailo/witti-api
+
+  - docker tag chimailo/witti-api registry.heroku.com/witti/web
+  - docker push registry.heroku.com/witti/web

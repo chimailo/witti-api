@@ -1,10 +1,6 @@
 import base64
-import json
 import random
-import requests
-from authlib.jose import jwt, errors
 from datetime import datetime
-from flask import current_app
 from sqlalchemy import and_
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
@@ -117,33 +113,6 @@ class User(db.Model, ResourceMixin, SearchableMixin):
     @classmethod
     def find_by_email(cls, email):
         return cls.query.filter(cls.email == email).first()
-
-    @staticmethod
-    def decode_auth_token(token):
-        """
-        Decodes the auth token
-
-        :param string: token
-        :return dict: The user's identity
-        """
-        try:
-            res = requests.get(
-                'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com'
-            ).json();
-        except requests.exceptions.ConnectionError:
-            return 'Network error'
-
-        header64 = token.split('.')[0].encode('ascii')
-        header = json.loads(bytes.decode(base64.b64decode(header64 + b'=='), 'ascii'))
-
-        try:
-            payload = jwt.decode(token, res[header['kid']])
-        except errors.ExpiredTokenError:
-            return 'Signature expired. Please log in again.'
-        except Exception:
-            return 'Invalid token. Please log in again.'
-        else:
-            return payload
 
     def follow(self, user):
         if not self.is_following(user):
@@ -288,3 +257,30 @@ class User(db.Model, ResourceMixin, SearchableMixin):
     #         )
     #     except Exception as e:
     #         return e
+
+    # @staticmethod
+    # def decode_auth_token(token):
+    #     """
+    #     Decodes the auth token
+
+    #     :param string: token
+    #     :return dict: The user's identity
+    #     """
+    #     try:
+    #         res = requests.get(
+    #             'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com'
+    #         ).json();
+    #     except requests.exceptions.ConnectionError:
+    #         return 'Network error'
+
+    #     header64 = token.split('.')[0].encode('ascii')
+    #     header = json.loads(bytes.decode(base64.b64decode(header64 + b'=='), 'ascii'))
+
+    #     try:
+    #         payload = jwt.decode(token, res[header['kid']])
+    #     except errors.ExpiredTokenError:
+    #         return 'Signature expired. Please log in again.'
+    #     except Exception:
+    #         return 'Invalid token. Please log in again.'
+
+    #     return payload
