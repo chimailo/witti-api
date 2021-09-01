@@ -281,7 +281,7 @@ def follow_tags():
     for user in User.query.all():
         user_tags = random.sample(tags, k=random.randrange(1, len(tags / 3)))
         user.tags.extend(user_tags)
-        db.session.add(user)3
+        db.session.add(user)
     db.session.commit()
 
 
