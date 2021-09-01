@@ -16,3 +16,6 @@ app.db
 
 logs/
 .vscode/
+
+.travis.yml
+service_account
