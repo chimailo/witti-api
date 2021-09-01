@@ -106,9 +106,9 @@ def test(path):
     return subprocess.call(cmd, shell=True)
 
 
-@click.argument("num_of_users", default=38)
-@click.argument("num_of_posts", default=150)
-@click.argument("num_of_comments", default=500)
+@click.argument("num_of_users", default=20)
+@click.argument("num_of_posts", default=100)
+@click.argument("num_of_comments", default=200)
 @cli.command()
 def seed_db(num_of_users, num_of_posts, num_of_comments):
     db_init()
@@ -120,7 +120,7 @@ def seed_db(num_of_users, num_of_posts, num_of_comments):
     seed_messages()
 
 
-@cli.command()
+# @cli.command()
 def db_init():
     """Initialize the database."""
     db.drop_all()
@@ -130,8 +130,7 @@ def db_init():
     return None
 
 
-@click.argument("num_of_users", default=40)
-@cli.command()
+# @cli.command()
 def seed_users(num_of_users):
     """
     Seed the database with users.
@@ -151,7 +150,7 @@ def seed_users(num_of_users):
         for user in data.get('results'):
             u = User(email=user.get('email'))
             u.created_on = random_timestamp(
-                datetime(2020, 3, 1), datetime(2020, 7, 28))
+                datetime(2021, 3, 1), datetime(2021, 4, 28))
 
             u.profile = Profile()
             u.profile.username = user.get('login')['username']
@@ -172,7 +171,7 @@ def seed_users(num_of_users):
 
         for user in users:
             following = random.sample(
-                users, k=random.randrange(15, int(len(users)/2)))
+                users, k=random.randrange(5, int(len(users)/2)))
             user.followed.extend(following)
 
         print('Saving to database...')
@@ -185,8 +184,7 @@ def seed_users(num_of_users):
         print(f'Error: {error}')
 
 
-@click.argument("num_of_posts", default=150)
-@cli.command()
+# @cli.command()
 def seed_posts(num_of_posts):
     """Seed the database with some posts."""
     users = User.query.all()
@@ -222,7 +220,7 @@ def seed_posts(num_of_posts):
 
             post.likes.extend(random.sample(users, k=random.randrange(36)))
             post.created_on = random_timestamp(
-                datetime(2020, 7, 1), datetime(2020, 9, 28))
+                datetime(2021, 5, 1), datetime(2021, 6, 28))
 
             for t in tags:
                 tag = Tag.query.filter_by(name=t).first()
@@ -252,7 +250,7 @@ def seed_posts(num_of_posts):
             post.body = body
             post.user_id = user.id
             post.created_on = random_timestamp(
-                datetime(2020, 9, 1), datetime(2020, 12, 31))
+                datetime(2021, 5, 1), datetime(2020, 6, 31))
             post.likes.extend(random.sample(users, k=random.randrange(30)))
 
             for t in tags:
@@ -275,16 +273,15 @@ def seed_posts(num_of_posts):
         print(f'Error: {error}')
 
 
-@cli.command()
+# @cli.command()
 def follow_tags():
     print('following tags...')
     tags = Tag.query.all()
 
     for user in User.query.all():
-        user_tags = random.sample(tags, k=random.randrange(1, 5))
-        print(user, user_tags)
+        user_tags = random.sample(tags, k=random.randrange(1, len(tags / 3)))
         user.tags.extend(user_tags)
-        db.session.add(user)
+        db.session.add(user)3
     db.session.commit()
 
 
@@ -312,7 +309,7 @@ def seed_comments(num_of_comments):
             comment.user_id = user.id
             comment.comment_id = post.id
             comment.created_on = random_timestamp(
-                datetime(2021, 1, 1), datetime(2021, 2, 11))
+                datetime(2021, 7, 1), datetime(2021, 8, 21))
             comment.likes.extend(random.sample(users, k=random.randrange(12)))
             comments_list.append(comment)
 
@@ -332,7 +329,7 @@ def seed_conversations():
 
     for user in users:
         sample = random.sample(
-            user.followed.all(), k=(random.randrange(10, 15)))
+            user.followed.all(), k=(random.randrange(1, 5)))
 
         for u in sample:
             chat = Chat.query.filter(
